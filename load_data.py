@@ -1,14 +1,11 @@
 import os
 import en_core_web_sm
 import torch
-import torch.nn as nn
 import torchvision.transforms as transforms
-import matplotlib.pylab as plt
 import pandas as pd
 import numpy as np
 from PIL import Image
 from collections import Counter
-from tqdm import tqdm
 from torch.utils.data import DataLoader, Dataset
 from torch.nn.utils.rnn import pad_sequence
 
@@ -34,6 +31,9 @@ class CaptionsTokenizer:
         self.convert_idx_str = {v: k for k, v in self.convert_str_idx.items()}
         self.unk = []
         self.nlp = en_core_web_sm.load()
+
+    def __len__(self):
+        return len(self.convert_idx_str)
 
     def _tokenize(self, caption):
         """
@@ -139,9 +139,9 @@ class CaptionsLoader:
         self.images_dir = images_dir
         self.transform = transform
         self.batch_size = batch_size
-        self.num_workers = 8
+        self.num_workers = num_workers
         self.shuffle = shuffle
-        self.pin_memory = True
+        self.pin_memory = pin_memory
         self.dataset = CaptionsDataset(captions_file, images_dir, transform, max_unk_freq)
 
     def _generate_batch(self, batch):
@@ -163,17 +163,17 @@ class CaptionsLoader:
 
 
 if __name__ == "__main__":
-    captions = os.path.join(BASE_DIR, CAPTIONS_DIR, CAPTIONS_FILE)
-    images = os.path.join(BASE_DIR, IMAGES_DIR)
+    captions_path = os.path.join(BASE_DIR, CAPTIONS_DIR, CAPTIONS_FILE)
+    images_path = os.path.join(BASE_DIR, IMAGES_DIR)
     trans = transforms.Compose(
         [transforms.Resize((224, 224)), transforms.ToTensor(), ]
     )
 
-    cl = CaptionsLoader(captions, images, trans,
+    cl = CaptionsLoader(captions_path, images_path, trans,
                         batch_size=32, num_workers=8, shuffle=True,
                         pin_memory=True, max_unk_freq=2)
     loader, dataset = cl.get_loader()
-    print(os.path.dirname(os.path.realpath(__file__)))
-    for idx, (iamges, captions) in enumerate(loader):
-        print(iamges.shape)
-        print(captions.shape)
+    for images_batch, captions_batch in loader:
+        print(images_batch.shape)
+        print(captions_batch.shape)
+
