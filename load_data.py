@@ -27,7 +27,7 @@ class CaptionsTokenizer:
             max_unk_freq (int): Maximum frequency for a token to be considered unknown and be replaced with <UNK> token.
         """
         self.max_unk_freq = max_unk_freq
-        self.convert_str_idx = {'<PAD>': 0, '<UNK>': 2, '<SOS>': 3, '<EOS>': 4}
+        self.convert_str_idx = {'<PAD>': 0, '<UNK>': 1, '<SOS>': 2, '<EOS>': 3}
         self.convert_idx_str = {v: k for k, v in self.convert_str_idx.items()}
         self.unk = []
         self.nlp = en_core_web_sm.load()

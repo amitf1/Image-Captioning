@@ -13,7 +13,7 @@ IMAGES_DIR = os.path.join("flickr30k_images", "flickr30k_images", "flickr30k_ima
 CAPTIONS_DIR = "flickr30k_images"
 CAPTIONS_FILE = "results.csv"
 LOAD_MODEL_PATH = None
-SAVE_MODEL_PATH = None
+SAVE_MODEL_PATH = 'image_captioning_model.pth.tar'
 
 
 def flatten_sequences(output, truth):
@@ -53,19 +53,28 @@ def fit_model():
         index_to_string=dataset.tokenizer.convert_idx_str
     ).to(device)
 
-    num_epochs = 1000
-    lr = 3e-4
+    num_epochs = 2
+    lr = 5e-4
     optimizer = optim.Adam(model.parameters(), lr)
     criterion = nn.CrossEntropyLoss(ignore_index=dataset.tokenizer.convert_str_idx['<PAD>'])
 
     # images, captions = next(iter(loader))
-
+    print("device: ", device)
     for epoch in range(num_epochs):
+        if SAVE_MODEL_PATH:
+            checkpoint = {
+                "state_dict": model.state_dict(),
+                "optimizer": optimizer.state_dict(),
+                "index_to_string": model.index_to_string
+            }
+            print("==> Saving Model")
+            torch.save(checkpoint, SAVE_MODEL_PATH)
+
         loop = tqdm(enumerate(loader), total=len(loader))
         for batch_idx, (images, captions) in loop:
             images = images.to(device)
             captions = captions.to(device)
-            out = model(images, captions[:, :-1])  # don't take the end token as inupt
+            out = model(images, captions[:, :-1])  # don't take the end token as input
 
             # flatten the sequences in each example so we have a tensor of words instead of sequences
             sequence_flattened_output, sequence_flattened_truth = flatten_sequences(out, captions)
@@ -79,4 +88,5 @@ def fit_model():
             loop.set_postfix(loss=loss.item())
 
 
-fit_model()
+if __name__ == '__main__':
+    fit_model()
