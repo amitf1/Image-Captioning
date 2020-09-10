@@ -54,7 +54,7 @@ def fit_model():
         index_to_string=dataset.tokenizer.convert_idx_str
     ).to(device)
 
-    num_epochs = 10
+    num_epochs = 1
     lr = 5e-3
     optimizer = optim.Adam(model.parameters(), lr)
     criterion = nn.CrossEntropyLoss(ignore_index=dataset.tokenizer.convert_str_idx['<PAD>'])
@@ -102,11 +102,12 @@ def fit_model():
             }
             print("==> Saving Model")
             torch.save(checkpoint, SAVE_MODEL_PATH)
-        elif epoch == 0 and mean_loss < 2.203:
+        elif epoch == 0 and mean_loss < 2.198:
             checkpoint = {
                 "state_dict": model.state_dict(),
                 "optimizer": optimizer.state_dict(),
-                "index_to_string": model.index_to_string
+                "index_to_string": model.index_to_string,
+                "vocab_size": len(dataset.tokenizer)
             }
             print("==> Saving Model")
             torch.save(checkpoint, SAVE_MODEL_PATH)
