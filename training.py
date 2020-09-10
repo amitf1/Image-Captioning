@@ -54,7 +54,7 @@ def fit_model():
         index_to_string=dataset.tokenizer.convert_idx_str
     ).to(device)
 
-    num_epochs = 8
+    num_epochs = 15
     lr = 1e-2
     optimizer = optim.Adam(model.parameters(), lr)
     criterion = nn.CrossEntropyLoss(ignore_index=dataset.tokenizer.convert_str_idx['<PAD>'])
