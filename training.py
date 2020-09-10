@@ -55,7 +55,7 @@ def fit_model():
     ).to(device)
 
     num_epochs = 8
-    lr = 5e-3
+    lr = 1e-2
     optimizer = optim.Adam(model.parameters(), lr)
     criterion = nn.CrossEntropyLoss(ignore_index=dataset.tokenizer.convert_str_idx['<PAD>'])
     lr_scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, patience=1, verbose=True)
@@ -102,7 +102,7 @@ def fit_model():
             }
             print("==> Saving Model")
             torch.save(checkpoint, SAVE_MODEL_PATH)
-        elif epoch == 0 and mean_loss < 2.198:
+        elif epoch == 0 and mean_loss < 2.166:
             checkpoint = {
                 "state_dict": model.state_dict(),
                 "optimizer": optimizer.state_dict(),
