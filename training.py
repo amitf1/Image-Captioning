@@ -12,7 +12,8 @@ BASE_DIR = "flickr-image-dataset"
 IMAGES_DIR = os.path.join("flickr30k_images", "flickr30k_images", "flickr30k_images")
 CAPTIONS_DIR = "flickr30k_images"
 CAPTIONS_FILE = "results.csv"
-LOAD_MODEL_PATH = None
+LOAD_MODEL_PATH = 'image_captioning_model.pth.tar'
+# LOAD_MODEL_PATH = None
 SAVE_MODEL_PATH = 'image_captioning_model.pth.tar'
 
 
@@ -47,28 +48,29 @@ def fit_model():
     model = EncoderDecoder(
         embedding_size=256,
         train_all=False,
-        num_lstms=1,
+        num_lstms=2,
         hidden_size=256,
         vocab_size=len(dataset.tokenizer),
         index_to_string=dataset.tokenizer.convert_idx_str
     ).to(device)
 
-    num_epochs = 2
-    lr = 5e-4
+    num_epochs = 10
+    lr = 5e-3
     optimizer = optim.Adam(model.parameters(), lr)
     criterion = nn.CrossEntropyLoss(ignore_index=dataset.tokenizer.convert_str_idx['<PAD>'])
+    lr_scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, patience=1, verbose=True)
+
+    if LOAD_MODEL_PATH:
+        print("==> Loading Model")
+        checkpoint = torch.load(LOAD_MODEL_PATH)
+        model.load_state_dict(checkpoint['state_dict'])
+        optimizer.load_state_dict(checkpoint['optimizer'])
 
     # images, captions = next(iter(loader))
     print("device: ", device)
     for epoch in range(num_epochs):
-        if SAVE_MODEL_PATH:
-            checkpoint = {
-                "state_dict": model.state_dict(),
-                "optimizer": optimizer.state_dict(),
-                "index_to_string": model.index_to_string
-            }
-            print("==> Saving Model")
-            torch.save(checkpoint, SAVE_MODEL_PATH)
+        losses = []
+        mean_losses = []
 
         loop = tqdm(enumerate(loader), total=len(loader))
         for batch_idx, (images, captions) in loop:
@@ -83,9 +85,31 @@ def fit_model():
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
-        # print(loss.item())
-            loop.set_description(f'{epoch}/{num_epochs}')
+            losses.append(loss.item())
+            loop.set_description(f'{epoch+1}/{num_epochs}')
             loop.set_postfix(loss=loss.item())
+        mean_loss = round(sum(losses)/len(losses), 3)
+        lr_scheduler.step(mean_loss)
+        print("mean loss: ", mean_loss)
+        mean_losses.append(mean_loss)
+
+        if SAVE_MODEL_PATH and epoch != 0 and mean_losses[-1] == min(mean_losses):
+            checkpoint = {
+                "state_dict": model.state_dict(),
+                "optimizer": optimizer.state_dict(),
+                "index_to_string": model.index_to_string,
+                "vocab_size": len(dataset.tokenizer)
+            }
+            print("==> Saving Model")
+            torch.save(checkpoint, SAVE_MODEL_PATH)
+        elif epoch == 0 and mean_loss < 2.203:
+            checkpoint = {
+                "state_dict": model.state_dict(),
+                "optimizer": optimizer.state_dict(),
+                "index_to_string": model.index_to_string
+            }
+            print("==> Saving Model")
+            torch.save(checkpoint, SAVE_MODEL_PATH)
 
 
 if __name__ == '__main__':
