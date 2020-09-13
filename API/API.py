@@ -8,6 +8,7 @@ import streamlit as st
 
 LOAD_MODEL_PATH = 'image_captioning_model.pth.tar'
 MAX_LEN = 50
+st.set_option('deprecation.showfileUploaderEncoding', False)
 
 
 def load_model(path):
@@ -19,7 +20,7 @@ def load_model(path):
         train_all=False,
         num_lstms=2,
         hidden_size=256,
-        vocab_size=checkpoint['vocab_size'],
+        vocab_size=9859,
         index_to_string=checkpoint['index_to_string']
     ).to(device)
 

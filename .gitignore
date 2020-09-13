@@ -123,6 +123,14 @@ venv.bak/
 # mypy
 .mypy_cache/
 .dmypy.json
+
+# torch model
+*.pth.tar
+
+flickr-image-dataset/
+.idea/
+
+
 dmypy.json
 
 # Pyre type checker
